@@ -1,31 +1,959 @@
-﻿
-Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.14.36310.24 d17.14
-MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CCA-4", "CCA-4.vcxproj", "{749422E7-734C-47C3-BAF7-5D09782215B4}"
-EndProject
-Global
-	GlobalSection(SolutionConfigurationPlatforms) = preSolution
-		Debug|x64 = Debug|x64
-		Debug|x86 = Debug|x86
-		Release|x64 = Release|x64
-		Release|x86 = Release|x86
-	EndGlobalSection
-	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{749422E7-734C-47C3-BAF7-5D09782215B4}.Debug|x64.ActiveCfg = Debug|x64
-		{749422E7-734C-47C3-BAF7-5D09782215B4}.Debug|x64.Build.0 = Debug|x64
-		{749422E7-734C-47C3-BAF7-5D09782215B4}.Debug|x86.ActiveCfg = Debug|Win32
-		{749422E7-734C-47C3-BAF7-5D09782215B4}.Debug|x86.Build.0 = Debug|Win32
-		{749422E7-734C-47C3-BAF7-5D09782215B4}.Release|x64.ActiveCfg = Release|x64
-		{749422E7-734C-47C3-BAF7-5D09782215B4}.Release|x64.Build.0 = Release|x64
-		{749422E7-734C-47C3-BAF7-5D09782215B4}.Release|x86.ActiveCfg = Release|Win32
-		{749422E7-734C-47C3-BAF7-5D09782215B4}.Release|x86.Build.0 = Release|Win32
-	EndGlobalSection
-	GlobalSection(SolutionProperties) = preSolution
-		HideSolutionNode = FALSE
-	EndGlobalSection
-	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {A74886C7-4586-4624-B578-60E2B614EE98}
-	EndGlobalSection
-EndGlobal
+// 2D Array
+#include <assert.h>
+#include <ctype.h>
+#include <limits.h>
+#include <math.h>
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+char* readline();
+char* ltrim(char*);
+char* rtrim(char*);
+char** split_string(char*);
+
+int parse_int(char*);
+
+/*
+ * Complete the 'hourglassSum' function below.
+ *
+ * The function is expected to return an INTEGER.
+ * The function accepts 2D_INTEGER_ARRAY arr as parameter.
+ */
+int hourglassSum(int arr_rows, int arr_columns, int** arr) {
+    int max_sum = INT_MIN;
+
+    for (int i = 0; i < arr_rows - 2; i++) {
+        for (int j = 0; j < arr_columns - 2; j++) {
+            int sum = arr[i][j] + arr[i][j + 1] + arr[i][j + 2]
+                + arr[i + 1][j + 1]
+                + arr[i + 2][j] + arr[i + 2][j + 1] + arr[i + 2][j + 2];
+
+            if (sum > max_sum)
+                max_sum = sum;
+        }
+    }
+
+    return max_sum;
+}
+
+int main()
+{
+    FILE* fptr = fopen(getenv("OUTPUT_PATH"), "w");
+
+    int** arr = malloc(6 * sizeof(int*));
+
+    for (int i = 0; i < 6; i++) {
+        *(arr + i) = malloc(6 * (sizeof(int)));
+
+        char** arr_item_temp = split_string(rtrim(readline()));
+
+        for (int j = 0; j < 6; j++) {
+            int arr_item = parse_int(*(arr_item_temp + j));
+
+            *(*(arr + i) + j) = arr_item;
+        }
+    }
+
+    int result = hourglassSum(6, 6, arr);
+
+    fprintf(fptr, "%d\n", result);
+
+    fclose(fptr);
+
+    return 0;
+}
+
+char* readline() {
+    size_t alloc_length = 1024;
+    size_t data_length = 0;
+
+    char* data = malloc(alloc_length);
+
+    while (true) {
+        char* cursor = data + data_length;
+        char* line = fgets(cursor, alloc_length - data_length, stdin);
+
+        if (!line) {
+            break;
+        }
+
+        data_length += strlen(cursor);
+
+        if (data_length < alloc_length - 1 || data[data_length - 1] == '\n') {
+            break;
+        }
+
+        alloc_length <<= 1;
+
+        data = realloc(data, alloc_length);
+
+        if (!data) {
+            data = '\0';
+
+            break;
+        }
+    }
+
+    if (data[data_length - 1] == '\n') {
+        data[data_length - 1] = '\0';
+
+        data = realloc(data, data_length);
+
+        if (!data) {
+            data = '\0';
+        }
+    }
+    else {
+        data = realloc(data, data_length + 1);
+
+        if (!data) {
+            data = '\0';
+        }
+        else {
+            data[data_length] = '\0';
+        }
+    }
+
+    return data;
+}
+
+char* ltrim(char* str) {
+    if (!str) {
+        return '\0';
+    }
+
+    if (!*str) {
+        return str;
+    }
+
+    while (*str != '\0' && isspace(*str)) {
+        str++;
+    }
+
+    return str;
+}
+
+char* rtrim(char* str) {
+    if (!str) {
+        return '\0';
+    }
+
+    if (!*str) {
+        return str;
+    }
+
+    char* end = str + strlen(str) - 1;
+
+    while (end >= str && isspace(*end)) {
+        end--;
+    }
+
+    *(end + 1) = '\0';
+
+    return str;
+}
+
+char** split_string(char* str) {
+    char** splits = NULL;
+    char* token = strtok(str, " ");
+
+    int spaces = 0;
+
+    while (token) {
+        splits = realloc(splits, sizeof(char*) * ++spaces);
+
+        if (!splits) {
+            return splits;
+        }
+
+        splits[spaces - 1] = token;
+
+        token = strtok(NULL, " ");
+    }
+
+    return splits;
+}
+
+int parse_int(char* str) {
+    char* endptr;
+    int value = strtol(str, &endptr, 10);
+
+    if (endptr == str || *endptr != '\0') {
+        exit(EXIT_FAILURE);
+    }
+
+    return value;
+}
+
+// Array Manipulation
+
+#include <assert.h>
+#include <ctype.h>
+#include <limits.h>
+#include <math.h>
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+char* readline();
+char* ltrim(char*);
+char* rtrim(char*);
+char** split_string(char*);
+
+int parse_int(char*);
+
+/*
+ * Complete the 'arrayManipulation' function below.
+ *
+ * The function is expected to return a LONG_INTEGER.
+ * The function accepts following parameters:
+ *  1. INTEGER n
+ *  2. 2D_INTEGER_ARRAY queries
+ */
+
+long arrayManipulation(int n, int queries_rows, int queries_columns, int** queries) {
+    long long* arr = calloc(n + 2, sizeof(long long));
+    for (int i = 0; i < queries_rows; i++) {
+        int a = queries[i][0];
+        int b = queries[i][1];
+        long k = queries[i][2];
+        arr[a] += k;
+        arr[b + 1] -= k;
+    }
+    long long max = 0, curr = 0;
+    for (int i = 1; i <= n; i++) {
+        curr += arr[i];
+        if (curr > max) max = curr;
+    }
+    free(arr);
+    return max;
+}
+
+int main()
+{
+    FILE* fptr = fopen(getenv("OUTPUT_PATH"), "w");
+
+    char** first_multiple_input = split_string(rtrim(readline()));
+
+    int n = parse_int(*(first_multiple_input + 0));
+
+    int m = parse_int(*(first_multiple_input + 1));
+
+    int** queries = malloc(m * sizeof(int*));
+
+    for (int i = 0; i < m; i++) {
+        *(queries + i) = malloc(3 * (sizeof(int)));
+
+        char** queries_item_temp = split_string(rtrim(readline()));
+
+        for (int j = 0; j < 3; j++) {
+            int queries_item = parse_int(*(queries_item_temp + j));
+
+            *(*(queries + i) + j) = queries_item;
+        }
+    }
+
+    long result = arrayManipulation(n, m, 3, queries);
+
+    fprintf(fptr, "%ld\n", result);
+
+    fclose(fptr);
+
+    return 0;
+}
+
+char* readline() {
+    size_t alloc_length = 1024;
+    size_t data_length = 0;
+
+    char* data = malloc(alloc_length);
+
+    while (true) {
+        char* cursor = data + data_length;
+        char* line = fgets(cursor, alloc_length - data_length, stdin);
+
+        if (!line) break;
+
+        data_length += strlen(cursor);
+
+        if (data_length < alloc_length - 1 || data[data_length - 1] == '\n') break;
+
+        alloc_length <<= 1;
+        data = realloc(data, alloc_length);
+        if (!data) break;
+    }
+
+    if (data[data_length - 1] == '\n') data[data_length - 1] = '\0';
+    return data;
+}
+
+char* ltrim(char* str) {
+    while (*str && isspace(*str)) str++;
+    return str;
+}
+
+char* rtrim(char* str) {
+    char* end = str + strlen(str) - 1;
+    while (end >= str && isspace(*end)) end--;
+    *(end + 1) = '\0';
+    return str;
+}
+
+char** split_string(char* str) {
+    char** splits = NULL;
+    char* token = strtok(str, " ");
+    int spaces = 0;
+    while (token) {
+        splits = realloc(splits, sizeof(char*) * ++spaces);
+        splits[spaces - 1] = token;
+        token = strtok(NULL, " ");
+    }
+    return splits;
+}
+
+int parse_int(char* str) {
+    char* endptr;
+    int value = strtol(str, &endptr, 10);
+    if (endptr == str || *endptr != '\0') exit(EXIT_FAILURE);
+    return value;
+}
+
+// Direct Connections
+
+#include <stdio.h>
+#include <stdlib.h>
+#define MOD 1000000007
+long long read(int idx, long long* tree);
+void update(int idx, int val, long long* tree, int MaxVal);
+void sort_a(int* a, int* b, int* c, int size);
+void merge(int* a, int* left_a, int* right_a, int* b, int* left_b, int* right_b, int* c, int* left_c, int* right_c, int left_size, int right_size);
+void sort_a2(int* a, int* b, int size);
+void merge2(int* a, int* left_a, int* right_a, int* b, int* left_b, int* right_b, int left_size, int right_size);
+
+int main()
+{
+    int i, j, T, N;
+    int* x, * p, * x_sort, * p_sort, * index;
+    long long ans, temp, * n_tree, * d_tree;
+    x = (int*)malloc(200000 * sizeof(int));
+    p = (int*)malloc(200000 * sizeof(int));
+    x_sort = (int*)malloc(200000 * sizeof(int));
+    p_sort = (int*)malloc(200000 * sizeof(int));
+    index = (int*)malloc(200000 * sizeof(int));
+    n_tree = (long long*)malloc(200001 * sizeof(long long));
+    d_tree = (long long*)malloc(200001 * sizeof(long long));
+    scanf("%d", &T);
+    for (i = 0; i < T; i++) {
+        ans = 0;
+        scanf("%d", &N);
+        for (j = 0; j <= N; j++)
+            n_tree[j] = d_tree[j] = 0;
+        for (j = 0; j < N; j++)
+            scanf("%d", x + j);
+        for (j = 0; j < N; j++) {
+            scanf("%d", p + j);
+            update(j + 1, 1, n_tree, N);
+        }
+        sort_a2(x, p, N);
+        for (j = 0; j < N; j++) {
+            x_sort[j] = x[j];
+            p_sort[j] = p[j];
+            index[j] = j;
+            update(j + 1, x[j], d_tree, N);
+        }
+        sort_a(p_sort, x_sort, index, N);
+        for (j = N - 1; j != 0; j--) {
+            temp = x_sort[j] * read(index[j], n_tree) - read(index[j], d_tree);
+            while (temp < 0)
+                temp += MOD;
+            temp %= MOD;
+            ans += p_sort[j] * temp;
+            ans %= MOD;
+            temp = (read(N, d_tree) - read(index[j] + 1, d_tree)) - x_sort[j] * (read(N, n_tree) - read(index[j] + 1, n_tree));
+            while (temp < 0)
+                temp += MOD;
+            temp %= MOD;
+            ans += p_sort[j] * temp;
+            ans %= MOD;
+            update(index[j] + 1, -1, n_tree, N);
+            update(index[j] + 1, -(x_sort[j]), d_tree, N);
+        }
+        printf("%lld\n", ans); // Fixed: changed 'n' to '\n'
+    }
+    return 0;
+}
+long long read(int idx, long long* tree) {
+    long long sum = 0;
+    while (idx > 0) {
+        sum += tree[idx];
+        sum %= MOD;
+        idx -= (idx & -idx);
+    }
+    return sum;
+}
+void update(int idx, int val, long long* tree, int MaxVal) {
+    while (idx <= MaxVal) {
+        tree[idx] += val;
+        tree[idx] %= MOD;
+        idx += (idx & -idx);
+    }
+}
+void sort_a(int* a, int* b, int* c, int size)
+{
+    if (size < 2)
+        return;
+    int m = (size + 1) / 2, i;
+    int* left_a, * left_b, * left_c, * right_a, * right_b, * right_c;
+    left_a = (int*)malloc(m * sizeof(int));
+    right_a = (int*)malloc((size - m) * sizeof(int));
+    left_b = (int*)malloc(m * sizeof(int));
+    right_b = (int*)malloc((size - m) * sizeof(int));
+    left_c = (int*)malloc(m * sizeof(int));
+    right_c = (int*)malloc((size - m) * sizeof(int));
+    for (i = 0; i < m; i++) {
+        left_a[i] = a[i];
+        left_b[i] = b[i];
+        left_c[i] = c[i];
+    }
+    for (i = 0; i < size - m; i++) {
+        right_a[i] = a[i + m];
+        right_b[i] = b[i + m];
+        right_c[i] = c[i + m];
+    }
+    sort_a(left_a, left_b, left_c, m);
+    sort_a(right_a, right_b, right_c, size - m);
+    merge(a, left_a, right_a, b, left_b, right_b, c, left_c, right_c, m, size - m);
+    free(left_a);
+    free(right_a);
+    free(left_b);
+    free(right_b);
+    free(left_c);
+    free(right_c);
+    return;
+}
+void merge(int* a, int* left_a, int* right_a, int* b, int* left_b, int* right_b, int* c, int* left_c, int* right_c, int left_size, int right_size)
+{
+    int i = 0, j = 0;
+    while (i < left_size || j < right_size) {
+        if (i == left_size) {
+            a[i + j] = right_a[j];
+            b[i + j] = right_b[j];
+            c[i + j] = right_c[j];
+            j++;
+        }
+        else if (j == right_size) {
+            a[i + j] = left_a[i];
+            b[i + j] = left_b[i];
+            c[i + j] = left_c[i];
+            i++;
+        }
+        else if (left_a[i] <= right_a[j]) {
+            a[i + j] = left_a[i];
+            b[i + j] = left_b[i];
+            c[i + j] = left_c[i];
+            i++;
+        }
+        else {
+            a[i + j] = right_a[j];
+            b[i + j] = right_b[j];
+            c[i + j] = right_c[j];
+            j++;
+        }
+    }
+    return;
+}
+void sort_a2(int* a, int* b, int size)
+{
+    if (size < 2)
+        return;
+    int m = (size + 1) / 2, i;
+    int* left_a, * left_b, * right_a, * right_b;
+    left_a = (int*)malloc(m * sizeof(int));
+    right_a = (int*)malloc((size - m) * sizeof(int));
+    left_b = (int*)malloc(m * sizeof(int));
+    right_b = (int*)malloc((size - m) * sizeof(int));
+    for (i = 0; i < m; i++) {
+        left_a[i] = a[i];
+        left_b[i] = b[i];
+    }
+    for (i = 0; i < size - m; i++) {
+        right_a[i] = a[i + m];
+        right_b[i] = b[i + m];
+    }
+    sort_a2(left_a, left_b, m);
+    sort_a2(right_a, right_b, size - m);
+    merge2(a, left_a, right_a, b, left_b, right_b, m, size - m);
+    free(left_a);
+    free(right_a);
+    free(left_b);
+    free(right_b);
+    return;
+}
+void merge2(int* a, int* left_a, int* right_a, int* b, int* left_b, int* right_b, int left_size, int right_size)
+{
+    int i = 0, j = 0;
+    while (i < left_size || j < right_size) {
+        if (i == left_size) {
+            a[i + j] = right_a[j];
+            b[i + j] = right_b[j];
+            j++;
+        }
+        else if (j == right_size) {
+            a[i + j] = left_a[i];
+            b[i + j] = left_b[i];
+            i++;
+        }
+        else if (left_a[i] <= right_a[j]) {
+            a[i + j] = left_a[i];
+            b[i + j] = left_b[i];
+            i++;
+        }
+        else {
+            a[i + j] = right_a[j];
+            b[i + j] = right_b[j];
+            j++;
+        }
+    }
+    return;
+}
+
+// Subsequence Weighting
+
+#include <assert.h>
+#include <ctype.h>
+#include <limits.h>
+#include <math.h>
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+long long a[1000000][4], b[1000000], w[1000000], q[1000000], t, i, j, k, l, m, n, nn;
+
+long long makaj(long long ind, long long kto, long long vaha, long long lava) {
+    long long hm;
+
+    if (a[ind][0] == a[ind][2]) {
+        if (vaha + lava > a[ind][3]) a[ind][3] = vaha + lava;
+
+        return a[ind][3];
+    }
+
+    if (kto <= a[ind][1]) {
+        hm = makaj(2 * ind, kto, vaha, lava);
+        if (lava + vaha > hm) hm = lava + vaha;
+
+        if (hm > a[ind][3]) a[ind][3] = hm;
+        return a[ind][3];
+    }
+    else {
+        if (a[2 * ind][3] > lava) lava = a[2 * ind][3];
+        hm = makaj(2 * ind + 1, kto, vaha, lava);
+        if (lava + vaha > hm) hm = lava + vaha;
+
+        if (hm > a[ind][3]) a[ind][3] = hm;
+        return a[ind][3];
+    }
+
+    return -100000000000LL;
+}
+
+void vytvaraj(long long ind, long long zac, long long kon) {
+    long long hh;
+
+    hh = q[(zac + kon) / 2];
+
+    a[ind][0] = q[zac];
+    a[ind][1] = hh;
+    a[ind][2] = q[kon];
+    a[ind][3] = 0;
+
+    if (zac == kon) return;
+
+    vytvaraj(2 * ind, zac, (zac + kon) / 2);
+    vytvaraj(2 * ind + 1, (zac + kon) / 2 + 1, kon);
+
+    return;
+}
+
+int com(const void* x, const void* y) {
+    if (*(long long*)x > *(long long*)y) return 1;
+    return -1;
+}
+
+int main() {
+    scanf("%lld", &t);
+
+    while (t--) {
+        scanf("%lld", &n);
+        ;
+        for (i = 0; i < n; i++) scanf("%lld", b + i);
+        for (i = 0; i < n; i++) scanf("%lld", w + i);
+
+        for (i = 0; i < n; i++) q[i] = b[i];
+
+        qsort(q, n, sizeof(q[0]), com);
+
+        nn = 1;
+        for (i = 1; i < n; i++)
+            if (q[i] != q[i - 1]) q[nn++] = q[i];
+
+        vytvaraj(1, 0, nn - 1);
+        m = 0;
+
+        for (i = 0; i < n; i++) {
+            makaj(1, b[i], w[i], 0);
+        }
+
+        // Fixed: changed 'n' to '\n' for correct newline output
+        printf("%lld\n", a[1][3]);
+    }
+
+    return 0;
+}
+
+// Find maximum index product
+
+#include <stdio.h>
+#include <stdlib.h>
+
+int main() {
+    int n;
+    if (scanf("%d", &n) != 1) return 0;
+
+    // Using 1-based indexing to match typical problem statements
+    // Using calloc/malloc to avoid stack overflow on large N
+    int* arr = (int*)malloc((n + 1) * sizeof(int));
+    int* L = (int*)malloc((n + 1) * sizeof(int));
+    int* R = (int*)malloc((n + 1) * sizeof(int));
+    int* stack = (int*)malloc((n + 1) * sizeof(int));
+
+    for (int i = 1; i <= n; i++) {
+        scanf("%d", &arr[i]);
+    }
+
+    int top = -1; // Initialize stack pointer
+
+    // --- Calculate Left(i) ---
+    for (int i = 1; i <= n; i++) {
+        // Pop elements smaller than or equal to current element
+        while (top != -1 && arr[stack[top]] <= arr[i]) {
+            top--;
+        }
+        // If stack empty, no greater element exists to the left
+        if (top == -1) {
+            L[i] = 0;
+        }
+        else {
+            L[i] = stack[top];
+        }
+        stack[++top] = i; // Push current index
+    }
+
+    // --- Reset stack for Right(i) ---
+    top = -1;
+
+    // --- Calculate Right(i) ---
+    for (int i = n; i >= 1; i--) {
+        // Pop elements smaller than or equal to current element
+        while (top != -1 && arr[stack[top]] <= arr[i]) {
+            top--;
+        }
+        // If stack empty, no greater element exists to the right
+        if (top == -1) {
+            R[i] = 0;
+        }
+        else {
+            R[i] = stack[top];
+        }
+        stack[++top] = i; // Push current index
+    }
+
+    // --- Find Maximum Product ---
+    long long maxProd = 0;
+    for (int i = 1; i <= n; i++) {
+        // Cast to long long to prevent overflow during multiplication
+        long long currentProd = (long long)L[i] * R[i];
+        if (currentProd > maxProd) {
+            maxProd = currentProd;
+        }
+    }
+
+    printf("%lld\n", maxProd);
+
+    free(arr);
+    free(L);
+    free(R);
+    free(stack);
+
+    return 0;
+}
+
+// Taxicab Driver's Problem
+
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+
+#define have(self, id) ((self)[(id) >> 5] &  (1U << ((id) & 31U)))
+#define inv(self, id)  ((self)[(id) >> 5] ^= (1U << ((id) & 31U)))   
+
+static inline unsigned delta(unsigned self, unsigned other) {
+    return (self < other) ? (other - self) : (self - other);
+}
+
+void ascending_stbl(unsigned length, unsigned long* weights, unsigned* self) {
+    unsigned
+        at, span,
+        at_left, at_right,
+        * left, * right,
+        order[length];
+
+    for (span = 1; span < length; span <<= 1)
+        for (left = &((unsigned*)memcpy(order, self, sizeof(order[0]) * length))[at = length]; at > span; ) {
+            right = left - (at_right = span);
+            at_left = (at < (span << 1)) ? (at - span) : span;
+
+            for (left -= at_left + at_right; at_left && at_right;
+                self[--at] = (weights[left[at_left - 1]] > weights[right[at_right - 1]])
+                ? left[--at_left] : right[--at_right]);
+
+            memcpy(&self[at -= (at_left | at_right)], right, at_right * sizeof(self[0]));
+        }
+}
+
+
+int main() {
+    unsigned vertex_cnt;
+    unsigned long limits[2];
+    scanf("%u %lu %lu", &vertex_cnt, &limits[0], &limits[1]);
+
+    unsigned
+        cords[2][vertex_cnt],
+        neighbors[vertex_cnt << 1],
+        ancestors[vertex_cnt],
+        indices[vertex_cnt + 2],
+        next, tail, others, at;
+
+    for (at = 0; at < vertex_cnt; at++)
+        scanf("%u %u", &cords[0][at], &cords[1][at]);
+
+    for (at >>= 1; at--; ((unsigned long*)ancestors)[at] = 0x100000001UL * vertex_cnt);
+    for (ancestors[at += vertex_cnt] = vertex_cnt; at--; ancestors[others] = tail)
+        if (ancestors[(scanf("%u %u", &tail, &others), --tail, --others)] != vertex_cnt)
+            for (tail ^= others, others ^= tail, tail ^= others;
+                ancestors[others] != vertex_cnt;
+                others = next
+                ) {
+        next = ancestors[others];
+        ancestors[others] = tail;
+        tail = others;
+    }
+
+    memset(indices, 0, sizeof(indices));
+    for (at = vertex_cnt; at--; *(unsigned long*)&indices[ancestors[at]] += 0x100000001UL);
+    for (; ++at < (vertex_cnt >> 1); ((unsigned long*)indices)[at + 1] += ((unsigned long*)indices)[at]);
+    for (at = vertex_cnt; at--; neighbors[--indices[ancestors[at]]] = at);
+
+    unsigned
+        history[vertex_cnt],
+        weights[vertex_cnt + 1];
+
+    at += vertex_cnt;
+    history[at] = neighbors[at];
+    for (others = 0; others < at; others++) {
+        history[others] = history[at];
+        at -= (indices[history[at] + 1] - indices[history[at]]) - 1U;
+        memcpy(
+            &history[at],
+            &neighbors[indices[history[others]]],
+            sizeof(history[0]) * (indices[history[others] + 1] - indices[history[others]])
+        );
+    }
+    for (at = vertex_cnt >> 1; at--; ((unsigned long*)weights)[at] = 0x100000001UL);
+    for (*(unsigned long*)&weights[(at = vertex_cnt) - 1] = 1UL; --at;
+        weights[ancestors[history[at]]] += weights[history[at]]);
+
+    unsigned
+        offsets[vertex_cnt + 2],
+        forward[vertex_cnt];
+    {
+        unsigned
+            mass[vertex_cnt],
+            centroids[vertex_cnt];
+
+        centroids[history[0]] = (mass[0] = vertex_cnt);
+        for (at = 1; at--; weights[next] = 0) {
+            for (others = (tail = history[at]); (weights[others] << 1) < mass[at]; others = ancestors[tail = others]);
+            for (others = indices[next = others]; others < indices[next + 1]; others++)
+                if ((weights[neighbors[others]] << 1) > mass[at] && neighbors[others] != tail)
+                    others = indices[next = neighbors[others]] - 1;
+
+            for (centroids[next] = centroids[history[at]]; others-- > indices[next]; )
+                if (weights[neighbors[others]]) {
+                    centroids[history[at] = neighbors[others]] = next;
+                    mass[at++] = weights[neighbors[others]];
+                }
+
+            for (others = next; weights[ancestors[others]]; weights[others = ancestors[others]] -= weights[next]);
+            if (others != next) {
+                centroids[history[at] = ancestors[next]] = next;
+                mass[at++] = weights[others];
+            }
+        }
+        memset(offsets, 0, sizeof(offsets));
+        for (at = vertex_cnt; at--; *(unsigned long*)&offsets[centroids[at]] += 0x100000001UL);
+        for (; ++at < (vertex_cnt >> 1); ((unsigned long*)offsets)[at + 1] += ((unsigned long*)offsets)[at]);
+        for (at = vertex_cnt; at--; forward[--offsets[centroids[at]]] = at);
+    }
+
+    for (at = forward[(tail = vertex_cnt) - 1]; at != vertex_cnt; at = next) {
+        next = ancestors[at];
+        ancestors[at] = tail;
+        tail = at;
+    }
+
+    for (at >>= 1; at--; ((unsigned long*)indices)[at] = 0x200000002UL);
+    *(unsigned long*)indices = 0x200000001UL;
+    for (*(unsigned long*)&indices[(at = vertex_cnt) - 1] = 0x100000002UL; at--;
+        *(unsigned long*)&indices[ancestors[at]] += 0x100000001UL);
+    for (; ++at < (vertex_cnt >> 1); ((unsigned long*)indices)[at + 1] += ((unsigned long*)indices)[at]);
+    for (at = vertex_cnt; at--; neighbors[--indices[ancestors[at]]] = at);
+    for (; ++at < vertex_cnt; neighbors[--indices[at]] = ancestors[at]);
+    indices[at + 1] = at << 1;
+
+    unsigned
+        ordered[vertex_cnt << 1],
+        ranks[vertex_cnt << 1],
+        sums[vertex_cnt << 1],
+        deltas[2][vertex_cnt],
+        seen[((vertex_cnt + 1) >> 5) + 1];
+
+    unsigned long
+        total = 0,
+        max[2],
+        (*dists)[2][vertex_cnt << 1] = malloc(sizeof(dists[0]));
+
+    memset(seen, 0, sizeof(seen));
+    inv(seen, at);
+    for (history[0] = forward[at - 1], at = 1; at--; ) {
+        inv(seen, history[at]);
+        dists[0][0][vertex_cnt + history[at]] = (dists[0][1][vertex_cnt + history[at]] = (max[0] = (max[1] = 0UL)));
+        for (history[tail = vertex_cnt - 1] = history[next = at]; tail < vertex_cnt; next++)
+            for (others = indices[(history[next] = history[tail++]) + 1]; others-- > indices[history[next]]; )
+                if (have(seen, neighbors[others]) == 0) {
+                    inv(seen, neighbors[others]);
+                    weights[history[--tail] = neighbors[others]] = 1;
+                    ordered[history[tail]] = history[next];
+
+                    dists[0][0][vertex_cnt + history[tail]] = dists[0][0][vertex_cnt + history[next]]
+                        + delta(cords[0][history[next]], cords[0][history[tail]]);
+                    dists[0][1][vertex_cnt + history[tail]] = dists[0][1][vertex_cnt + history[next]]
+                        + delta(cords[1][history[next]], cords[1][history[tail]]);
+
+                    if (max[0] < dists[0][0][vertex_cnt + history[tail]])
+                        max[0] = dists[0][0][vertex_cnt + history[tail]];
+                    if (max[1] < dists[0][1][vertex_cnt + history[tail]])
+                        max[1] = dists[0][1][vertex_cnt + history[tail]];
+                }
+        if ((max[0] << 1) <= limits[0] && (max[1] << 1) <= limits[1])
+            continue;
+
+        for (weights[history[at]] = 1; --next > at; inv(seen, history[next]))
+            weights[ordered[history[next]]] += weights[history[next]];
+
+        ranks[history[next++]] = 0;
+        for (tail = 1, others = next; others < (at + weights[history[at]]); )
+            for (next += weights[history[next]], max[0] = tail; others < next; )
+                if (dists[0][0][vertex_cnt + history[others]] > limits[0]
+                    || dists[0][1][vertex_cnt + history[others]] > limits[1]) {
+                    total += (max[0] + ((at + weights[history[at]]) - next)) * weights[history[others]];
+                    others += weights[history[others]];
+                }
+                else {
+                    ancestors[ranks[history[others]] = tail] = ranks[ordered[history[others]]];
+                    dists[0][0][tail] = dists[0][0][vertex_cnt + history[others]];
+                    dists[0][1][tail++] = dists[0][1][vertex_cnt + history[others++]];
+                }
+
+        for (others = tail >> 1; others--; ((unsigned long*)weights)[others] = 0x100000001UL);
+        for (weights[(others = tail) - 1] = 1; --others; weights[ancestors[others]] += weights[others]) {
+            dists[0][0][tail + others] = limits[0] - dists[0][0][others];
+            dists[0][1][tail + others] = limits[1] - dists[0][1][others];
+
+            ordered[others - 1] = others;
+            ordered[tail + others - 2] = tail + others;
+        }
+
+        others = (tail - 1) << 1;
+        for (ascending_stbl(others, dists[0][1], ordered); others--; ranks[ordered[others]] = others);
+        for (; ++others < (tail - 1); ordered[others] = others + 1)
+            ordered[tail + others - 1] = tail + others + 1;
+
+        ascending_stbl((others <<= 1), dists[0][0], ordered);
+        memset(sums, 0, others * sizeof(sums[0]));
+        for (tail = 0; tail < others; tail++)
+            if (ordered[tail] > weights[0]) {
+                deltas[0][ordered[tail] -= weights[0]] = 0;
+                for (next = ranks[ordered[tail] + weights[0]]; next != 0xFFFFFFFFU; next = (next & (next + 1)) - 1)
+                    deltas[0][ordered[tail]] += sums[next];
+                ordered[tail] += weights[0];
+            }
+            else
+                for (next = ranks[ordered[tail]]; next < others; next |= next + 1)
+                    sums[next]++;
+
+        unsigned long sum = 0;
+        deltas[0][0] = weights[0] - 1;
+        for (others = 1; others < weights[0]; ) {
+            for (tail = weights[others]; tail--; ordered[tail] = others + tail)
+                ordered[weights[others] + tail] = weights[0] + others + tail;
+
+            tail = (weights[others] << 1);
+            for (ascending_stbl(tail, dists[0][1], ordered); tail--; ranks[ordered[tail]] = tail);
+
+            for (tail = weights[others]; tail--; ordered[tail] = others + tail)
+                ordered[weights[others] + tail] = weights[0] + others + tail;
+            ascending_stbl(weights[others] << 1, dists[0][0], ordered);
+
+            memset(sums, 0, (weights[others] << 1) * sizeof(sums[0]));
+            for (tail = 0; tail < (weights[others] << 1); tail++)
+                if (ordered[tail] > weights[0]) {
+                    deltas[1][ordered[tail] -= weights[0]] = 0;
+                    for (next = ranks[ordered[tail] + weights[0]]; next != 0xFFFFFFFFU; next = (next & (next + 1)) - 1)
+                        deltas[1][ordered[tail]] += sums[next];
+                    ordered[tail] += weights[0];
+                }
+                else
+                    for (next = ranks[ordered[tail]]; next < (weights[others] << 1); next |= next + 1)
+                        sums[next]++;
+
+            deltas[1][0] = weights[others];
+            for (tail = others + (tail >> 1); others < tail; others++)
+                sum += weights[others] * (unsigned long)(
+                    (deltas[0][ancestors[others]] - deltas[0][others])
+                    - (deltas[1][ancestors[others]] - deltas[1][others])
+                    );
+        }
+        total += sum >> 1;
+
+        others = offsets[history[at] + 1] - offsets[history[at]];
+        memcpy(&history[at], &forward[offsets[history[at]]], others * sizeof(history[0]));
+        at += others;
+    }
+    printf("%lu", total);
+
+    free(dists);
+    return 0;
+}
+
+
